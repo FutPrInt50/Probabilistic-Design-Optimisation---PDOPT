@@ -1,7 +1,7 @@
 # Probabilistic-Design-Optimisation---PDOPT
 Set-based MDO design space exploration
 
-Requisites
+**Requisites**
 
 For the PDOPT code
 
@@ -21,7 +21,7 @@ pymoo
 
 joblib
 
-Installation
+**Installation**
 
 Install by running in the root .git folder
 
