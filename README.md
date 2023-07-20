@@ -1,28 +1,20 @@
 # Probabilistic-Design-Optimisation---PDOPT
 Set-based MDO design space exploration
 
-**Requisites**
-
+### Requisites
 For the PDOPT code
+- numpy
+- scipy
+- matplotlib
+- pandas
+- plotly
+- scikit-learn
+- pymoo
+- joblib
 
-numpy
-
-scipy
-
-matplotlib
-
-pandas
-
-plotly
-
-scikit-learn
-
-pymoo
-
-joblib
-
-**Installation**
-
+### Installation
 Install by running in the root .git folder
 
+```
 python setup.py
+```
