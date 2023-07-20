@@ -1,0 +1,11 @@
+numpy
+scipy
+pandas
+plotly
+dash
+scikit-learn
+pymoo==0.5.0
+chaospy
+multiprocess
+tqdm
+psutil
