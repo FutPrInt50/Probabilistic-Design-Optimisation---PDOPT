@@ -24,8 +24,8 @@ from scipy.stats.qmc import Sobol, LatinHypercube
 
 from pymoo.core.problem import Problem
 from pymoo.algorithms.moo.unsga3 import UNSGA3
-from pymoo.factory import get_reference_directions
-from pymoo.util.termination.default import MultiObjectiveDefaultTermination
+from pymoo.util.ref_dirs import get_reference_directions
+from pymoo.termination.default import DefaultMultiObjectiveTermination
 from pymoo.optimize import minimize
 
 from sklearn.gaussian_process import GaussianProcessRegressor as GPR
@@ -336,7 +336,7 @@ class NNSurrogate(Problem):
 
         
 class KrigingSurrogate(Problem):
-    def __init__(self, model, design_space, set_id, **kwargs):
+    def __init__(self, model, design_space, set_id, kernel, **kwargs):
         
         self.model = model #store reference to model
         self.design_space = design_space
@@ -344,6 +344,7 @@ class KrigingSurrogate(Problem):
         self.var = self.design_space.parameters
         self.obj = self.design_space.objectives
         self.cst = self.design_space.constraints
+        self.kernel = kernel
         
         self.set_id = set_id
         set_levels = self.design_space.sets[self.set_id].parameter_levels_list
@@ -553,7 +554,13 @@ class KrigingSurrogate(Problem):
     
     def train_model(self):
         
-        base_model = GPR(kernel=ConstantKernel()*RBF()+ConstantKernel(), 
+        if self.kernel == 'matern':
+            kern = Matern()
+        else:  
+            kern = ConstantKernel()*RBF()+ConstantKernel()
+        
+        
+        base_model = GPR(kernel=kern, 
                          n_restarts_optimizer=20)
         
         self.sr_model = MultiOutputRegressor(base_model, n_jobs=-1)
@@ -681,6 +688,7 @@ class Optimisation:
 
     def __init__(self, design_space, model, 
                  save_history=False, use_surrogate=True,
+                 use_nn=False,  gp_kern='matern',
                  **kwargs):
         
         # Construct the PyMOO problems for surviving design spaces
@@ -698,9 +706,15 @@ class Optimisation:
         for i_set in range(len(design_space.sets)):
             if not design_space.sets[i_set].is_discarded:
                 if use_surrogate:
-                    opt_prob = KrigingSurrogate(self.model, 
+                    if use_nn:
+                        opt_prob = NNSurrogate(self.model, 
                                            design_space, 
                                            i_set)
+                    else:
+                        opt_prob = KrigingSurrogate(self.model, 
+                                            design_space, 
+                                            i_set,
+                                            kernel=gp_kern)
                 else:
                     opt_prob = DirectOpt(self.model, 
                                            design_space, 
@@ -751,11 +765,10 @@ class Optimisation:
             if 'n_max_evals' in kwargs else 1e6
         
         
-        self.termination = MultiObjectiveDefaultTermination(x_tol=x_tol,
-                                                            cv_tol=cv_tol,
-                                                            f_tol=f_tol,
-                                                            nth_gen=5,
-                                                            n_last=10,
+        self.termination = DefaultMultiObjectiveTermination(xtol=x_tol,
+                                                            cvtol=cv_tol,
+                                                            ftol=f_tol,
+                                                            period=5,
                                                             n_max_gen=n_max_gen,
                                                             n_max_evals=n_max_evals)
         
